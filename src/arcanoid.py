@@ -1,15 +1,9 @@
 # Standard Library Imports
-import os
 import sys
-import pickle
 from random import randint
 
 # Third-party Imports
-import neat
 import pygame
-
-# Local Imports
-from tools.utils import get_repo_path
 
 GAME_WIDTH = 600
 GAME_HEIGHT = 400
@@ -18,35 +12,51 @@ COLUMN_NUMBER = 10
 BLACK = (0, 0, 0)
 WHITE = (255, 255, 255)
 
-gen = 0
-
 
 class Player:
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
         self.width = GAME_WIDTH / 6
         self.height = 20
-        self.velocity = 0
+        self.velocity = 3
         asset = pygame.image.load("assets/player.png").convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
 
-    def move(self):
+    def move_right(self):
         self.rect.x += self.velocity
-
-        if self.rect.x < 0:
-            self.rect.x = 0
 
         if self.rect.x > (GAME_WIDTH - self.width):
             self.rect.x = GAME_WIDTH - self.width
 
+    def move_left(self):
+        self.rect.x -= self.velocity
+
+        if self.rect.x < 0:
+            self.rect.x = 0
+
+
+class Block:
+    width = GAME_WIDTH / COLUMN_NUMBER
+    height = 20
+
+    def __init__(self, x: int, y: int, block_version: int) -> None:
+        self.x = x
+        self.y = y
+        asset = pygame.image.load(f"assets/block{block_version}.png").convert_alpha()
+        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.rect = self.image.get_rect(center=(self.x, self.y))
+
+    def draw(self, screen: pygame.surface):
+        screen.blit(self.image, self.rect)
+
 
 class Ball:
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
         self.width = 20
@@ -57,57 +67,38 @@ class Ball:
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
 
-    def move(self, player, blocks):
+    def move(self, player: Player, blocks: list[Block]):
         self.rect.x += self.horizontal_velocity
         self.rect.y += self.vertical_velocity
 
         if self.rect.x <= 0:
+            self.rect.x = 0
             self.horizontal_velocity = -self.horizontal_velocity
-            self.rect.x += self.horizontal_velocity
 
-        if self.rect.x >= GAME_WIDTH - self.width:
+        if self.rect.x > GAME_WIDTH - self.width:
+            self.rect.x = GAME_WIDTH - self.width
             self.horizontal_velocity = -self.horizontal_velocity
-            self.rect.x += self.horizontal_velocity
 
         if self.rect.y <= 0:
+            self.rect.y = 0
             self.vertical_velocity = -self.vertical_velocity
-            self.rect.y += self.vertical_velocity
 
         if self.rect.y >= GAME_HEIGHT - self.height:
             return -1
 
         if self.rect.colliderect(player.rect):
-            randomizer = randint(-10, 10) * 0.1
-            self.horizontal_velocity += randomizer  # + player.velocity/4
+            # randomizer = randint(-10, 10) * 0.1
+            self.horizontal_velocity += player.velocity  # + randomizer
             self.vertical_velocity = -self.vertical_velocity
-            self.rect.x += self.horizontal_velocity
-            self.rect.y += self.vertical_velocity
 
         for i, block in enumerate(blocks):
             if self.rect.colliderect(block.rect):
                 self.vertical_velocity = -self.vertical_velocity
-                self.rect.x += self.horizontal_velocity
-                self.rect.y += self.vertical_velocity
                 return i
         return -2
-
-
-class Block:
-    width = GAME_WIDTH / COLUMN_NUMBER
-    height = 20
-
-    def __init__(self, x, y, block_var) -> None:
-        self.x = x
-        self.y = y
-        asset = pygame.image.load(f"assets/block{block_var}.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
-        self.rect = self.image.get_rect(center=(self.x, self.y))
-
-    def draw(self, screen):
-        screen.blit(self.image, self.rect)
 
 
 class Life:
@@ -115,18 +106,18 @@ class Life:
     width = 30
     height = 30
 
-    def __init__(self, x, y) -> None:
+    def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
         asset = pygame.image.load(f"assets/life.png").convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
-    def draw(self, screen):
+    def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
 
 
-def get_key(keyName):
+def get_key(keyName: str):
     key_is_pressed = False
     keyInput = pygame.key.get_pressed()
     myKey = getattr(pygame, f"K_{keyName}")
@@ -160,15 +151,18 @@ def game_init():
     return text_font, clock, screen
 
 
-def game_over(screen, text_font):
+def game_over(screen: pygame.Surface, text_font: pygame.font.Font, score: int):
     game_over_font = pygame.font.Font("assets/pixel_font.ttf", 50)
+    game_over_score_font = pygame.font.Font("assets/pixel_font.ttf", 35)
 
     while True:
         screen.fill(BLACK)
         gameover_text = game_over_font.render("Game over", 1, WHITE)
         screen.blit(gameover_text, (160, 100))
+        gameover_text = game_over_score_font.render(f"Score: {score}", 1, WHITE)
+        screen.blit(gameover_text, (210, 180))
         restart_text = text_font.render("Press space to play again", 1, WHITE)
-        screen.blit(restart_text, (160, 200))
+        screen.blit(restart_text, (160, 240))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -198,7 +192,7 @@ def arcanoid():
         lifes.append(life)
 
     while True:
-        clock.tick(60)
+        clock.tick(60 * level)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -228,7 +222,7 @@ def arcanoid():
                 ball.__init__(300, 200)
                 player.__init__(300, 350)
             else:
-                game_over(screen, text_font)
+                game_over(screen, text_font, score)
         elif i != -2:
             score += 1
             blocks.remove(blocks[i])
@@ -238,143 +232,14 @@ def arcanoid():
                 player.__init__(300, 350)
                 level += 1
 
-        player.velocity = 0
-
         if get_key("LEFT"):
-            player.velocity = -3
-            player.move()
+            player.move_left()
 
         if get_key("RIGHT"):
-            player.velocity = 3
-            player.move()
+            player.move_right()
 
         pygame.display.update()
-
-
-def eval_genomes(genomes, config):
-    global gen
-    gen += 1
-
-    text_font, clock, screen = game_init()
-    nets = []
-    balls = []
-    players = []
-    ge = []
-
-    for genome_id, genome in genomes:
-        genome.fitness = 0
-        net = neat.nn.FeedForwardNetwork.create(genome, config)
-        nets.append(net)
-        balls.append(Ball(300, 200))
-        players.append(Player(300, 350))
-        ge.append(genome)
-
-    score = 0
-    level = 1
-    blocks = spawn_blocks()
-
-    while len(players) > 0:
-        clock.tick(170)
-
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                pygame.quit()
-                sys.exit()
-            elif get_key("ESCAPE"):
-                pygame.quit()
-                sys.exit()
-
-        screen.fill(BLACK)
-
-        for player in players:
-            player.draw(screen)
-        for ball in balls:
-            ball.draw(screen)
-        for block in blocks:
-            block.draw(screen)
-
-        score_text = text_font.render("Score: " + str(score), 1, WHITE)
-        screen.blit(score_text, (0, GAME_HEIGHT - 30))
-        level_text = text_font.render("Level: " + str(level), 1, WHITE)
-        screen.blit(level_text, (120, GAME_HEIGHT - 30))
-        gen_text = text_font.render("Generation: " + str(gen), 1, WHITE)
-        screen.blit(gen_text, (220, GAME_HEIGHT - 30))
-        alive_text = text_font.render("Players: " + str(len(players)), 1, WHITE)
-        screen.blit(alive_text, (400, GAME_HEIGHT - 30))
-
-        for ball_id, ball in enumerate(balls):
-            i = ball.move(players[ball_id], blocks)
-
-            if i == -1:
-                players.remove(players[ball_id])
-                balls.remove(balls[ball_id])
-                ge[ball_id].fitness -= 1
-            elif i != -2:
-                score += 1
-                ge[ball_id].fitness += 1
-                blocks.remove(blocks[i])
-                if len(blocks) == 0:
-                    blocks = spawn_blocks()
-                    ball.__init__(300, 200)
-                    players[ball_id].__init__(300, 350)
-                    level += 1
-
-        player.velocity = 0
-
-        for player_id, player in enumerate(players):
-            ge[player_id].fitness += 0.1
-
-            output = nets[player_id].activate(
-                (
-                    player.rect.x,
-                    abs(player.rect.x - balls[player_id].rect.x),
-                    balls[player_id].horizontal_velocity,
-                )
-            )
-            print(f"Output: {output}")
-            if output[0] > 0.5:
-                player.velocity = 3
-                player.move()
-            else:
-                player.velocity = -3
-                player.move()
-
-        pygame.display.update()
-
-        if score > 120:
-            repo_path = get_repo_path()
-            model_path = os.path.join(repo_path, "models/best.pickle")
-            pickle.dump(nets[0], open(model_path, "wb"))
-            break
-
-
-def run(config_file):
-    # code from https://towardsdatascience.com/ai-teaches-itself-to-play-a-game-f8957a99b628
-    config = neat.config.Config(
-        neat.DefaultGenome,
-        neat.DefaultReproduction,
-        neat.DefaultSpeciesSet,
-        neat.DefaultStagnation,
-        config_file,
-    )
-
-    # Create the population, which is the top-level object for a NEAT run.
-    p = neat.Population(config)
-
-    # Add a stdout reporter to show progress in the terminal.
-    p.add_reporter(neat.StdOutReporter(True))
-    stats = neat.StatisticsReporter()
-    p.add_reporter(stats)
-    # p.add_reporter(neat.Checkpointer(5))
-
-    # Run for up to 50 generations.
-    winner = p.run(eval_genomes, 50)
-
-    # show final stats
-    print("\nBest genome:\n{!s}".format(winner))
 
 
 if __name__ == "__main__":
-    repo_path = get_repo_path()
-    config_path = os.path.join(repo_path, "configs/config.txt")
-    run(config_path)
+    arcanoid()
