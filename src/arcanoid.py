@@ -1,12 +1,27 @@
 # Standard Library Imports
+import os
 import sys
 from random import randint
 
 # Third-party Imports
 import pygame
 
-GAME_WIDTH = 600
-GAME_HEIGHT = 400
+# Local Imports
+from main import main_menu
+from tools.utils import get_repo_path
+
+# Global Variables
+gen = 0
+repo_path = get_repo_path()
+
+ASSETS_PATH = os.path.join(repo_path, "assets/")
+CONFIGS_PATH = os.path.join(repo_path, "configs/")
+
+MODEL_PATH = os.path.join(repo_path, "models/best_genome.pickle")
+CHEKCPOINT_PATH = os.path.join(repo_path, "models/neat-checkpoint-")
+
+WIDTH = 600
+HEIGHT = 400
 ROW_NUMBER = 4
 COLUMN_NUMBER = 10
 BLACK = (0, 0, 0)
@@ -17,37 +32,44 @@ class Player:
     def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
-        self.width = GAME_WIDTH / 6
+        self.width = WIDTH / 6
         self.height = 20
-        self.velocity = 3
-        asset = pygame.image.load("assets/player.png").convert_alpha()
+        self.velocity = 0
+        asset = pygame.image.load(ASSETS_PATH + "player.png").convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
 
-    def move_right(self):
+    def move(self):
         self.rect.x += self.velocity
 
-        if self.rect.x > (GAME_WIDTH - self.width):
-            self.rect.x = GAME_WIDTH - self.width
+    def move_right(self):
+        self.velocity = 4
+        self.move()
+
+        if self.rect.x > (WIDTH - self.width):
+            self.rect.x = WIDTH - self.width
 
     def move_left(self):
-        self.rect.x -= self.velocity
+        self.velocity = -4
+        self.move()
 
         if self.rect.x < 0:
             self.rect.x = 0
 
 
 class Block:
-    width = GAME_WIDTH / COLUMN_NUMBER
+    width = WIDTH / COLUMN_NUMBER
     height = 20
 
     def __init__(self, x: int, y: int, block_version: int) -> None:
         self.x = x
         self.y = y
-        asset = pygame.image.load(f"assets/block{block_version}.png").convert_alpha()
+        asset = pygame.image.load(
+            ASSETS_PATH + f"block{block_version}.png"
+        ).convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
@@ -63,7 +85,7 @@ class Ball:
         self.height = 20
         self.vertical_velocity = 3
         self.horizontal_velocity = randint(-3, 3)
-        asset = pygame.image.load("assets/ball.png").convert_alpha()
+        asset = pygame.image.load(ASSETS_PATH + "ball.png").convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
@@ -78,20 +100,20 @@ class Ball:
             self.rect.x = 0
             self.horizontal_velocity = -self.horizontal_velocity
 
-        if self.rect.x > GAME_WIDTH - self.width:
-            self.rect.x = GAME_WIDTH - self.width
+        if self.rect.x > WIDTH - self.width:
+            self.rect.x = WIDTH - self.width
             self.horizontal_velocity = -self.horizontal_velocity
 
         if self.rect.y <= 0:
             self.rect.y = 0
             self.vertical_velocity = -self.vertical_velocity
 
-        if self.rect.y >= GAME_HEIGHT - self.height:
+        if self.rect.y >= HEIGHT - self.height:
             return -1
 
         if self.rect.colliderect(player.rect):
-            # randomizer = randint(-10, 10) * 0.1
-            self.horizontal_velocity += player.velocity  # + randomizer
+            randomizer = randint(-10, 10) * 0.1
+            self.horizontal_velocity += player.velocity + randomizer
             self.vertical_velocity = -self.vertical_velocity
 
         for i, block in enumerate(blocks):
@@ -109,7 +131,7 @@ class Life:
     def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
-        asset = pygame.image.load(f"assets/life.png").convert_alpha()
+        asset = pygame.image.load(ASSETS_PATH + "life.png").convert_alpha()
         self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
@@ -117,11 +139,11 @@ class Life:
         screen.blit(self.image, self.rect)
 
 
-def get_key(keyName: str):
+def get_key(key_name: str):
     key_is_pressed = False
-    keyInput = pygame.key.get_pressed()
-    myKey = getattr(pygame, f"K_{keyName}")
-    if keyInput[myKey]:
+    key_input = pygame.key.get_pressed()
+    key = getattr(pygame, f"K_{key_name}")
+    if key_input[key]:
         key_is_pressed = True
     return key_is_pressed
 
@@ -145,24 +167,31 @@ def game_init():
     pygame.display.set_caption("Arcanoid")
     pygame.time.set_timer(pygame.USEREVENT, 1000)
 
-    text_font = pygame.font.Font("assets/pixel_font.ttf", 20)
+    text_font = pygame.font.Font(ASSETS_PATH + "pixel_font.ttf", 20)
     clock = pygame.time.Clock()
-    screen = pygame.display.set_mode((GAME_WIDTH, GAME_HEIGHT))
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
     return text_font, clock, screen
 
 
-def game_over(screen: pygame.Surface, text_font: pygame.font.Font, score: int):
-    game_over_font = pygame.font.Font("assets/pixel_font.ttf", 50)
-    game_over_score_font = pygame.font.Font("assets/pixel_font.ttf", 35)
+def game_over(
+    text_font: pygame.font.Font,
+    clock: pygame.time.Clock,
+    screen: pygame.Surface,
+    score: int,
+):
+    game_over_font = pygame.font.Font(ASSETS_PATH + "pixel_font.ttf", 50)
+    game_over_score_font = pygame.font.Font(ASSETS_PATH + "pixel_font.ttf", 35)
 
     while True:
         screen.fill(BLACK)
-        gameover_text = game_over_font.render("Game over", 1, WHITE)
-        screen.blit(gameover_text, (160, 100))
-        gameover_text = game_over_score_font.render(f"Score: {score}", 1, WHITE)
-        screen.blit(gameover_text, (210, 180))
+        game_over_text = game_over_font.render("Game over", 1, WHITE)
+        screen.blit(game_over_text, (160, 80))
+        game_over_text = game_over_score_font.render(f"Score: {score}", 1, WHITE)
+        screen.blit(game_over_text, (210, 150))
         restart_text = text_font.render("Press space to play again", 1, WHITE)
         screen.blit(restart_text, (160, 240))
+        restart_text = text_font.render("Press enter to go back to main menu", 1, WHITE)
+        screen.blit(restart_text, (110, 300))
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -171,12 +200,13 @@ def game_over(screen: pygame.Surface, text_font: pygame.font.Font, score: int):
                 pygame.quit()
                 sys.exit()
             elif get_key("SPACE"):
-                arcanoid()
+                main(text_font, clock, screen)
+            elif get_key("RETURN"):
+                main_menu()
         pygame.display.update()
 
 
-def arcanoid():
-    text_font, clock, screen = game_init()
+def main(text_font: pygame.font.Font, clock: pygame.time.Clock, screen: pygame.Surface):
     player = Player(300, 350)
     ball = Ball(300, 200)
     lifes = []
@@ -186,8 +216,8 @@ def arcanoid():
 
     for i in range(Life.max_count):
         life = Life(
-            GAME_WIDTH - Life.width * (Life.max_count - i),
-            GAME_HEIGHT - Life.height / 2,
+            WIDTH - Life.width * (Life.max_count - i),
+            HEIGHT - Life.height / 2,
         )
         lifes.append(life)
 
@@ -211,9 +241,9 @@ def arcanoid():
             life.draw(screen)
 
         score_text = text_font.render("Score: " + str(score), 1, WHITE)
-        screen.blit(score_text, (0, GAME_HEIGHT - 30))
+        screen.blit(score_text, (0, HEIGHT - 30))
         level_text = text_font.render("Level: " + str(level), 1, WHITE)
-        screen.blit(level_text, (255, GAME_HEIGHT - 30))
+        screen.blit(level_text, (255, HEIGHT - 30))
 
         i = ball.move(player, blocks)
         if i == -1:
@@ -222,7 +252,7 @@ def arcanoid():
                 ball.__init__(300, 200)
                 player.__init__(300, 350)
             else:
-                game_over(screen, text_font, score)
+                game_over(text_font, clock, screen, score)
         elif i != -2:
             score += 1
             blocks.remove(blocks[i])
@@ -242,4 +272,4 @@ def arcanoid():
 
 
 if __name__ == "__main__":
-    arcanoid()
+    main()

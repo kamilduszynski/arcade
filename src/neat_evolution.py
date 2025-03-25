@@ -1,5 +1,4 @@
 # Standard Library Imports
-import os
 import sys
 import pickle
 
@@ -9,21 +8,10 @@ import pygame
 
 # Local Imports
 import arcanoid
-from tools.utils import get_repo_path
-
-# Global Variables
-gen = 0
-repo_path = get_repo_path()
-config_path = os.path.join(repo_path, "configs/config.txt")
-model_path = os.path.join(repo_path, "models/best_genome.pickle")
-checkpoint_path = os.path.join(repo_path, "models/neat-checkpoint-")
 
 
 def eval_genomes(genomes, config):
-    global gen
-    # global repo_path
-    # global model_path
-    gen += 1
+    arcanoid.gen += 1
 
     text_font, clock, screen = arcanoid.game_init()
     ge = []
@@ -64,15 +52,17 @@ def eval_genomes(genomes, config):
             block.draw(screen)
 
         score_text = text_font.render("Score: " + str(score), 1, arcanoid.WHITE)
-        screen.blit(score_text, (0, arcanoid.GAME_HEIGHT - 30))
+        screen.blit(score_text, (0, arcanoid.HEIGHT - 30))
         level_text = text_font.render("Level: " + str(level), 1, arcanoid.WHITE)
-        screen.blit(level_text, (120, arcanoid.GAME_HEIGHT - 30))
-        gen_text = text_font.render("Generation: " + str(gen), 1, arcanoid.WHITE)
-        screen.blit(gen_text, (220, arcanoid.GAME_HEIGHT - 30))
+        screen.blit(level_text, (120, arcanoid.HEIGHT - 30))
+        gen_text = text_font.render(
+            "Generation: " + str(arcanoid.gen), 1, arcanoid.WHITE
+        )
+        screen.blit(gen_text, (220, arcanoid.HEIGHT - 30))
         alive_text = text_font.render(
             "Players: " + str(len(players)), 1, arcanoid.WHITE
         )
-        screen.blit(alive_text, (400, arcanoid.GAME_HEIGHT - 30))
+        screen.blit(alive_text, (400, arcanoid.HEIGHT - 30))
 
         for ball_id, ball in enumerate(balls):
             i = ball.move(players[ball_id], blocks)
@@ -107,7 +97,7 @@ def eval_genomes(genomes, config):
                 player.move_left()
 
             if score > 120 or ge[player_id].fitness > 1000:
-                pickle.dump(nets[player_id], open(model_path, "wb"))
+                pickle.dump(nets[player_id], open(arcanoid.MODEL_PATH, "wb"))
 
         pygame.display.update()
 
@@ -115,7 +105,7 @@ def eval_genomes(genomes, config):
 def run_best_genome():
     text_font, clock, screen = arcanoid.game_init()
 
-    with open(model_path, "rb") as file:
+    with open(arcanoid.MODEL_PATH, "rb") as file:
         best_genome = pickle.load(file)
 
     net = best_genome
@@ -145,9 +135,9 @@ def run_best_genome():
             block.draw(screen)
 
         score_text = text_font.render("Score: " + str(score), 1, arcanoid.WHITE)
-        screen.blit(score_text, (0, arcanoid.GAME_HEIGHT - 30))
+        screen.blit(score_text, (0, arcanoid.HEIGHT - 30))
         level_text = text_font.render("Level: " + str(level), 1, arcanoid.WHITE)
-        screen.blit(level_text, (255, arcanoid.GAME_HEIGHT - 30))
+        screen.blit(level_text, (255, arcanoid.HEIGHT - 30))
 
         i = ball.move(player, blocks)
 
@@ -196,7 +186,7 @@ def run_neat(config_file, generations=50):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     checkpointer = neat.Checkpointer(
-        generation_interval=10, filename_prefix=checkpoint_path
+        generation_interval=10, filename_prefix=arcanoid.CHEKCPOINT_PATH
     )
     p.add_reporter(checkpointer)
 
@@ -207,6 +197,10 @@ def run_neat(config_file, generations=50):
     print(f"\nBest genome:\n{str(winner)}")
 
 
-if __name__ == "__main__":
-    run_neat(config_path, 50)
+def main():
+    run_neat(arcanoid.CONFIGS_PATH + "config.txt", 50)
     run_best_genome()
+
+
+if __name__ == "__main__":
+    main()
