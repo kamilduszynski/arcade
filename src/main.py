@@ -2,20 +2,20 @@
 import pygame_menu
 
 # Local Imports
-import arcanoid
-import neat_evolution
+import arcanoid.arcanoid as arc
+import arcanoid.neat_evolution as neat
 
 
 def main_menu():
     dark_mode_theme = pygame_menu.themes.THEME_DARK.copy()
-    dark_mode_theme.background_color = arcanoid.BLACK
+    dark_mode_theme.background_color = arc.Arcanoid.BLACK
 
-    text_font, clock, screen = arcanoid.game_init()
+    game = arc.Arcanoid("Arcanoid")
 
     main_menu = pygame_menu.Menu(
         title="Main Menu",
-        width=arcanoid.WIDTH,
-        height=arcanoid.HEIGHT,
+        width=arc.Arcanoid.WIDTH,
+        height=arc.Arcanoid.HEIGHT,
         theme=dark_mode_theme,
     )
 
@@ -23,24 +23,21 @@ def main_menu():
 
     main_menu.add.button(
         title="Play game",
-        font_color=arcanoid.WHITE,
-        font_name=arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arcanoid.BLACK,
+        font_color=arc.Arcanoid.WHITE,
+        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
+        background_color=arc.Arcanoid.BLACK,
         accept_kwargs=True,
-        action=arcanoid.main,
-        text_font=text_font,
-        clock=clock,
-        screen=screen,
+        action=game.main,
     )
 
     main_menu.add.label(title="")
 
     main_menu.add.button(
         title="Run simulation",
-        action=neat_evolution.main,
-        font_color=arcanoid.WHITE,
-        font_name=arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arcanoid.BLACK,
+        action=neat.main,
+        font_color=arc.Arcanoid.WHITE,
+        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
+        background_color=arc.Arcanoid.BLACK,
     )
 
     main_menu.add.label(title="")
@@ -48,12 +45,12 @@ def main_menu():
     main_menu.add.button(
         title="Exit",
         action=pygame_menu.events.EXIT,
-        font_color=arcanoid.WHITE,
-        font_name=arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arcanoid.BLACK,
+        font_color=arc.Arcanoid.WHITE,
+        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
+        background_color=arc.Arcanoid.BLACK,
     )
 
-    main_menu.mainloop(screen)
+    main_menu.mainloop(game.screen)
 
 
 if __name__ == "__main__":

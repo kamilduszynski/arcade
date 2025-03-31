@@ -7,13 +7,17 @@ import neat
 import pygame
 
 # Local Imports
-import arcanoid
+import arcanoid.arcanoid as arc
+from tools.utils import key_down
+
+gen = 0
 
 
 def eval_genomes(genomes, config):
-    arcanoid.gen += 1
+    global gen
+    gen += 1
 
-    text_font, clock, screen = arcanoid.game_init()
+    game = arc.Arcanoid("Arcanoid")
     ge = []
     nets = []
     balls = []
@@ -24,45 +28,49 @@ def eval_genomes(genomes, config):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
         ge.append(genome)
         nets.append(net)
-        balls.append(arcanoid.Ball(300, 200))
-        players.append(arcanoid.Player(300, 350))
+        balls.append(arc.Ball(300, 200))
+        players.append(arc.Player(300, 350))
 
     score = 0
     level = 1
-    blocks = arcanoid.spawn_blocks()
+    blocks = arc.Block.spawn()
 
     while len(players) > 0:
-        clock.tick(500)
+        game.clock.tick(500)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif arcanoid.get_key("ESCAPE"):
+            elif key_down("ESCAPE"):
                 pygame.quit()
                 sys.exit()
 
-        screen.fill(arcanoid.BLACK)
+        game.screen.fill(arc.Arcanoid.BLACK)
 
         for player in players:
-            player.draw(screen)
+            player.draw(game.screen)
         for ball in balls:
-            ball.draw(screen)
+            ball.draw(game.screen)
         for block in blocks:
-            block.draw(screen)
+            block.draw(game.screen)
 
-        score_text = text_font.render("Score: " + str(score), 1, arcanoid.WHITE)
-        screen.blit(score_text, (0, arcanoid.HEIGHT - 30))
-        level_text = text_font.render("Level: " + str(level), 1, arcanoid.WHITE)
-        screen.blit(level_text, (120, arcanoid.HEIGHT - 30))
-        gen_text = text_font.render(
-            "Generation: " + str(arcanoid.gen), 1, arcanoid.WHITE
+        score_text = game.text_font.render(
+            "Score: " + str(score), 1, arc.Arcanoid.WHITE
         )
-        screen.blit(gen_text, (220, arcanoid.HEIGHT - 30))
-        alive_text = text_font.render(
-            "Players: " + str(len(players)), 1, arcanoid.WHITE
+        game.screen.blit(score_text, (0, arc.Arcanoid.HEIGHT - 30))
+        level_text = game.text_font.render(
+            "Level: " + str(level), 1, arc.Arcanoid.WHITE
         )
-        screen.blit(alive_text, (400, arcanoid.HEIGHT - 30))
+        game.screen.blit(level_text, (120, arc.Arcanoid.HEIGHT - 30))
+        gen_text = game.text_font.render(
+            "Generation: " + str(gen), 1, arc.Arcanoid.WHITE
+        )
+        game.screen.blit(gen_text, (220, arc.Arcanoid.HEIGHT - 30))
+        alive_text = game.text_font.render(
+            "Players: " + str(len(players)), 1, arc.Arcanoid.WHITE
+        )
+        game.screen.blit(alive_text, (400, arc.Arcanoid.HEIGHT - 30))
 
         for ball_id, ball in enumerate(balls):
             i = ball.move(players[ball_id], blocks)
@@ -76,7 +84,7 @@ def eval_genomes(genomes, config):
                 ge[ball_id].fitness += 10
                 blocks.remove(blocks[i])
                 if len(blocks) == 0:
-                    blocks = arcanoid.spawn_blocks()
+                    blocks = arc.Block.spawn()
                     ball.__init__(300, 200)
                     players[ball_id].__init__(300, 350)
                     level += 1
@@ -97,57 +105,61 @@ def eval_genomes(genomes, config):
                 player.move_left()
 
             if score > 120 or ge[player_id].fitness > 1000:
-                pickle.dump(nets[player_id], open(arcanoid.MODEL_PATH, "wb"))
+                pickle.dump(nets[player_id], open(arc.Arcanoid.MODEL_PATH, "wb"))
 
         pygame.display.update()
 
 
 def run_best_genome():
-    text_font, clock, screen = arcanoid.game_init()
+    game = arc.Arcanoid("Arcanoid")
 
-    with open(arcanoid.MODEL_PATH, "rb") as file:
+    with open(arc.Arcanoid.MODEL_PATH, "rb") as file:
         best_genome = pickle.load(file)
 
     net = best_genome
-    ball = arcanoid.Ball(300, 200)
-    player = arcanoid.Player(300, 350)
+    ball = arc.Ball(300, 200)
+    player = arc.Player(300, 350)
 
     score = 0
     level = 1
-    blocks = arcanoid.spawn_blocks()
+    blocks = arc.Block.spawn()
 
     while True > 0:
-        clock.tick(240)
+        game.clock.tick(240)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            elif arcanoid.get_key("ESCAPE"):
+            elif key_down("ESCAPE"):
                 pygame.quit()
                 sys.exit()
 
-        screen.fill(arcanoid.BLACK)
+        game.screen.fill(arc.Arcanoid.BLACK)
 
-        player.draw(screen)
-        ball.draw(screen)
+        player.draw(game.screen)
+        ball.draw(game.screen)
         for block in blocks:
-            block.draw(screen)
+            block.draw(game.screen)
 
-        score_text = text_font.render("Score: " + str(score), 1, arcanoid.WHITE)
-        screen.blit(score_text, (0, arcanoid.HEIGHT - 30))
-        level_text = text_font.render("Level: " + str(level), 1, arcanoid.WHITE)
-        screen.blit(level_text, (255, arcanoid.HEIGHT - 30))
+        score_text = game.text_font.render(
+            "Score: " + str(score), 1, arc.Arcanoid.WHITE
+        )
+        game.screen.blit(score_text, (0, arc.Arcanoid.HEIGHT - 30))
+        level_text = game.text_font.render(
+            "Level: " + str(level), 1, arc.Arcanoid.WHITE
+        )
+        game.screen.blit(level_text, (255, arc.Arcanoid.HEIGHT - 30))
 
         i = ball.move(player, blocks)
 
         if i == -1:
-            arcanoid.game_over(screen, text_font, score)
+            arc.Arcanoid.game_over()
         elif i != -2:
             score += 1
             blocks.remove(blocks[i])
             if len(blocks) == 0:
-                blocks = arcanoid.spawn_blocks()
+                blocks = arc.Block.spawn()
                 ball.__init__(300, 200)
                 player.__init__(300, 350)
                 level += 1
@@ -186,7 +198,7 @@ def run_neat(config_file, generations=50):
     stats = neat.StatisticsReporter()
     p.add_reporter(stats)
     checkpointer = neat.Checkpointer(
-        generation_interval=10, filename_prefix=arcanoid.CHEKCPOINT_PATH
+        generation_interval=10, filename_prefix=arc.Arcanoid.CHECKPOINT_PATH
     )
     p.add_reporter(checkpointer)
 
@@ -198,7 +210,7 @@ def run_neat(config_file, generations=50):
 
 
 def main():
-    run_neat(arcanoid.CONFIGS_PATH + "config.txt", 50)
+    run_neat(arc.Arcanoid.CONFIGS_PATH + "config.txt", 50)
     run_best_genome()
 
 
