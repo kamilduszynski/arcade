@@ -13,12 +13,20 @@ from tools.utils import key_down
 gen = 0
 
 
+def move_player(player, output):
+    print("Output:", output)
+    if output[0] > 0.9:
+        player.move_right()
+    elif output[0] < -0.9:
+        player.move_left()
+
+
 def eval_genomes(genomes, config):
     global gen
     gen += 1
 
-    game = arc.Arcanoid("Arcanoid")
-    ge = []
+    game = arc.Arcanoid("Arcanoid", main)
+    genomes_list = []
     nets = []
     balls = []
     players = []
@@ -26,7 +34,7 @@ def eval_genomes(genomes, config):
     for _, genome in genomes:
         genome.fitness = 0
         net = neat.nn.FeedForwardNetwork.create(genome, config)
-        ge.append(genome)
+        genomes_list.append(genome)
         nets.append(net)
         balls.append(arc.Ball(300, 200))
         players.append(arc.Player(300, 350))
@@ -72,25 +80,8 @@ def eval_genomes(genomes, config):
         )
         game.screen.blit(alive_text, (400, arc.Arcanoid.HEIGHT - 30))
 
-        for ball_id, ball in enumerate(balls):
-            i = ball.move(players[ball_id], blocks)
-
-            if i == -1:
-                players.remove(players[ball_id])
-                balls.remove(balls[ball_id])
-                ge[ball_id].fitness -= 10
-            elif i != -2:
-                score += 1
-                ge[ball_id].fitness += 10
-                blocks.remove(blocks[i])
-                if len(blocks) == 0:
-                    blocks = arc.Block.spawn()
-                    ball.__init__(300, 200)
-                    players[ball_id].__init__(300, 350)
-                    level += 1
-
         for player_id, player in enumerate(players):
-            ge[player_id].fitness += 0.1
+            genomes_list[player_id].fitness += 0.1
 
             output = nets[player_id].activate(
                 (
@@ -99,19 +90,36 @@ def eval_genomes(genomes, config):
                     balls[player_id].horizontal_velocity,
                 )
             )
-            if output[0] > 0.5:
-                player.move_right()
-            elif output[0] < -0.5:
-                player.move_left()
+            move_player(player, output)
 
-            if score > 120 or ge[player_id].fitness > 1000:
+            if score > 120 or genomes_list[player_id].fitness > 1000:
                 pickle.dump(nets[player_id], open(arc.Arcanoid.MODEL_PATH, "wb"))
+
+        for ball_id, ball in enumerate(balls):
+            i = ball.move(players[ball_id], blocks)
+
+            if i == -1:
+                players.remove(players[ball_id])
+                balls.remove(balls[ball_id])
+                genomes_list[ball_id].fitness -= 10
+            elif i == -2:
+                continue
+            elif i >= 0:
+                score += 1
+                genomes_list[ball_id].fitness += 10
+                blocks.remove(blocks[i])
+                if len(blocks) == 0:
+                    blocks = arc.Block.spawn()
+                    ball.__init__(300, 200)
+                    players[ball_id].__init__(300, 350)
+                    level += 1
+            ball.collisions = 0
 
         pygame.display.update()
 
 
 def run_best_genome():
-    game = arc.Arcanoid("Arcanoid")
+    game = arc.Arcanoid("Arcanoid", main)
 
     with open(arc.Arcanoid.MODEL_PATH, "rb") as file:
         best_genome = pickle.load(file)
@@ -125,7 +133,7 @@ def run_best_genome():
     blocks = arc.Block.spawn()
 
     while True > 0:
-        game.clock.tick(240)
+        game.clock.tick(60 * level)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -152,18 +160,6 @@ def run_best_genome():
         game.screen.blit(level_text, (255, arc.Arcanoid.HEIGHT - 30))
 
         i = ball.move(player, blocks)
-
-        if i == -1:
-            arc.Arcanoid.game_over()
-        elif i != -2:
-            score += 1
-            blocks.remove(blocks[i])
-            if len(blocks) == 0:
-                blocks = arc.Block.spawn()
-                ball.__init__(300, 200)
-                player.__init__(300, 350)
-                level += 1
-
         output = net.activate(
             (
                 player.rect.x,
@@ -171,12 +167,23 @@ def run_best_genome():
                 ball.horizontal_velocity,
             )
         )
+        if i == -1:
+            pygame.quit()
+            sys.exit()
+        elif i == -2:
+            move_player(player, output)
+            continue
+        elif i >= 0:
+            score += 1
+            blocks.remove(blocks[i])
+            if len(blocks) == 0:
+                blocks = arc.Block.spawn()
+                ball.__init__(300, 200)
+                player.__init__(300, 350)
+                level += 1
+            move_player(player, output)
 
-        if output[0] > 0.5:
-            player.move_right()
-        elif output[0] < -0.5:
-            player.move_left()
-
+        ball.collisions = 0
         pygame.display.update()
 
 
@@ -203,7 +210,7 @@ def run_neat(config_file, generations=50):
     p.add_reporter(checkpointer)
 
     # Run for up to 50 generations.
-    winner = p.run(eval_genomes, generations)
+    winner = p.run(fitness_function=eval_genomes, n=generations)
 
     # show final stats
     print(f"\nBest genome:\n{str(winner)}")

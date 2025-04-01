@@ -2,42 +2,30 @@
 import pygame_menu
 
 # Local Imports
-import arcanoid.arcanoid as arc
 import arcanoid.neat_evolution as neat
+from base import BaseGame as bg
+from base import game_menu
+from arcanoid.arcanoid import Arcanoid
 
 
 def main_menu():
-    dark_mode_theme = pygame_menu.themes.THEME_DARK.copy()
-    dark_mode_theme.background_color = arc.Arcanoid.BLACK
-
-    game = arc.Arcanoid("Arcanoid")
+    arcanoid = Arcanoid("Arcanoid", neat.main)
 
     main_menu = pygame_menu.Menu(
         title="Main Menu",
-        width=arc.Arcanoid.WIDTH,
-        height=arc.Arcanoid.HEIGHT,
-        theme=dark_mode_theme,
+        width=bg.WIDTH,
+        height=bg.HEIGHT,
+        theme=bg.DARK_MODE,
     )
 
     main_menu._theme.widget_alignment = pygame_menu.locals.ALIGN_CENTER
 
     main_menu.add.button(
-        title="Play game",
-        font_color=arc.Arcanoid.WHITE,
-        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arc.Arcanoid.BLACK,
-        accept_kwargs=True,
-        action=game.main,
-    )
-
-    main_menu.add.label(title="")
-
-    main_menu.add.button(
-        title="Run simulation",
-        action=neat.main,
-        font_color=arc.Arcanoid.WHITE,
-        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arc.Arcanoid.BLACK,
+        title="Arcanoid",
+        action=game_menu(arcanoid),
+        font_color=bg.WHITE,
+        font_name=bg.ASSETS_PATH + "pixel_font.ttf",
+        background_color=bg.BLACK,
     )
 
     main_menu.add.label(title="")
@@ -45,12 +33,12 @@ def main_menu():
     main_menu.add.button(
         title="Exit",
         action=pygame_menu.events.EXIT,
-        font_color=arc.Arcanoid.WHITE,
-        font_name=arc.Arcanoid.ASSETS_PATH + "pixel_font.ttf",
-        background_color=arc.Arcanoid.BLACK,
+        font_color=bg.WHITE,
+        font_name=bg.ASSETS_PATH + "pixel_font.ttf",
+        background_color=bg.BLACK,
     )
 
-    main_menu.mainloop(game.screen)
+    main_menu.mainloop(arcanoid.screen)
 
 
 if __name__ == "__main__":
