@@ -1,6 +1,7 @@
 # Standard Library Imports
 import os
 import sys
+from collections.abc import Callable
 
 # Third-party Imports
 import pygame
@@ -28,14 +29,15 @@ class BaseGame:
     DARK_MODE = pygame_menu.themes.THEME_DARK.copy()
     DARK_MODE.background_color = BLACK
 
-    def __init__(self, game_name: str, simulation: function):
+    def __init__(self, game_name: str, simulation: Callable):
         pygame.init()
         pygame.display.set_caption(game_name)
         pygame.time.set_timer(pygame.USEREVENT, 1000)
 
+        self.game_name = game_name
         self.simulation = simulation
         self.score = 0
-        self.text_font = pygame.font.Font(BaseGame.ASSETS_PATH + "pixel_font.ttf", 20)
+        self.text_font = pygame.font.Font(BaseGame.ASSETS_PATH + "pixel_font.ttf", 15)
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.WIDTH, BaseGame.HEIGHT))
 
@@ -55,15 +57,15 @@ class BaseGame:
             game_over_text = game_over_score_font.render(
                 f"Score: {self.score}", 1, BaseGame.WHITE
             )
-            self.screen.blit(game_over_text, (210, 150))
+            self.screen.blit(game_over_text, (240, 150))
             restart_text = self.text_font.render(
                 "Press space to play again", 1, BaseGame.WHITE
             )
-            self.screen.blit(restart_text, (160, 240))
+            self.screen.blit(restart_text, (200, 240))
             restart_text = self.text_font.render(
                 "Press enter to go back to game menu", 1, BaseGame.WHITE
             )
-            self.screen.blit(restart_text, (110, 300))
+            self.screen.blit(restart_text, (150, 300))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -81,7 +83,7 @@ class BaseGame:
 
 def game_menu(game):
     game_menu = pygame_menu.Menu(
-        title="Game Menu",
+        title=f"{game.game_name.capitalize()} Menu",
         width=BaseGame.WIDTH,
         height=BaseGame.HEIGHT,
         theme=BaseGame.DARK_MODE,

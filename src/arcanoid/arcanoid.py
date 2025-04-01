@@ -15,12 +15,12 @@ class Player:
         self.x = x
         self.y = y
         self.width = bg.WIDTH / 6
-        self.hight = 20
+        self.height = 20
         self.velocity = 0
         asset = pygame.image.load(
             bg.ASSETS_PATH + "arcanoid/player.png"
         ).convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.hight))
+        self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface):
@@ -163,10 +163,7 @@ class Arcanoid(bg):
             self.clock.tick(60 * level)
 
             for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                elif key_down("ESCAPE"):
+                if event.type == pygame.QUIT or key_down("ESCAPE"):
                     pygame.quit()
                     sys.exit()
 
@@ -213,9 +210,5 @@ class Arcanoid(bg):
 
 
 if __name__ == "__main__":
-
-    def dummy():
-        print("dummy simulation")
-
-    game = Arcanoid("Arcanoid", dummy)
+    game = Arcanoid("Arcanoid", lambda: print("dummy simulation"))
     game.main()
