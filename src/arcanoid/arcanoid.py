@@ -17,10 +17,12 @@ class Player:
         self.width = bg.WIDTH / 6
         self.height = 20
         self.velocity = 0
-        asset = pygame.image.load(
-            bg.ASSETS_PATH + "arcanoid/player.png"
-        ).convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "arcanoid/player.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface):
@@ -51,10 +53,12 @@ class Block:
     def __init__(self, x: int, y: int, block_version: int) -> None:
         self.x = x
         self.y = y
-        asset = pygame.image.load(
-            bg.ASSETS_PATH + f"arcanoid/block{block_version}.png"
-        ).convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + f"arcanoid/block{block_version}.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.surface):
@@ -81,12 +85,16 @@ class Ball:
         self.y = y
         self.width = 20
         self.height = 20
+        self.collisions = 0
         self.vertical_velocity = 3
         self.horizontal_velocity = randint(-3, 3)
-        asset = pygame.image.load(bg.ASSETS_PATH + "arcanoid/ball.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
         self.rect = self.image.get_rect(center=(self.x, self.y))
-        self.collisions = 0
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "arcanoid/ball.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
 
     def draw(self, screen: pygame.Surface):
         screen.blit(self.image, self.rect)
@@ -113,7 +121,7 @@ class Ball:
         if self.rect.colliderect(player.rect):
             self.collisions += 1
             randomizer = randint(-10, 10) * 0.1
-            self.horizontal_velocity += randomizer
+            self.horizontal_velocity += player.velocity / 4 + randomizer
             self.vertical_velocity = -self.vertical_velocity
 
             if self.collisions >= 10:
@@ -135,8 +143,12 @@ class Life:
     def __init__(self, x: int, y: int) -> None:
         self.x = x
         self.y = y
-        asset = pygame.image.load(bg.ASSETS_PATH + "arcanoid/life.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "arcanoid/life.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface):
@@ -175,9 +187,13 @@ class Arcanoid(bg):
             for life in lifes:
                 life.draw(self.screen)
 
-            score_text = self.text_font.render("Score: " + str(self.score), 1, bg.WHITE)
+            score_text = self.text_font.render(
+                "Score: " + str(self.score), 1, bg.WHITE
+            )
             self.screen.blit(score_text, (0, bg.HEIGHT - 30))
-            level_text = self.text_font.render("Level: " + str(level), 1, bg.WHITE)
+            level_text = self.text_font.render(
+                "Level: " + str(level), 1, bg.WHITE
+            )
             self.screen.blit(level_text, (255, bg.HEIGHT - 30))
 
             if key_down("LEFT"):

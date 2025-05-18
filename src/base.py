@@ -34,38 +34,48 @@ class BaseGame:
         pygame.display.set_caption(game_name)
         pygame.time.set_timer(pygame.USEREVENT, 1000)
 
+        self.score = 0
         self.game_name = game_name
         self.simulation = simulation
-        self.score = 0
-        self.text_font = pygame.font.Font(BaseGame.ASSETS_PATH + "pixel_font.ttf", 15)
         self.clock = pygame.time.Clock()
         self.screen = pygame.display.set_mode((self.WIDTH, BaseGame.HEIGHT))
+        self.text_font = pygame.font.Font(
+            BaseGame.ASSETS_PATH + "pixel_font.ttf", 15
+        )
 
     def main(self):
         pass
 
     def game_over(self):
-        game_over_font = pygame.font.Font(BaseGame.ASSETS_PATH + "pixel_font.ttf", 50)
-        game_over_score_font = pygame.font.Font(
+        game_over_font = pygame.font.Font(
+            BaseGame.ASSETS_PATH + "pixel_font.ttf", 50
+        )
+        score_font = pygame.font.Font(
             BaseGame.ASSETS_PATH + "pixel_font.ttf", 35
         )
 
         while True:
             self.screen.fill(BaseGame.BLACK)
-            game_over_text = game_over_font.render("Game over", 1, BaseGame.WHITE)
+            game_over_text = game_over_font.render(
+                "Game over", 1, BaseGame.WHITE
+            )
             self.screen.blit(game_over_text, (160, 80))
-            game_over_text = game_over_score_font.render(
+
+            score_text = score_font.render(
                 f"Score: {self.score}", 1, BaseGame.WHITE
             )
-            self.screen.blit(game_over_text, (240, 150))
-            restart_text = self.text_font.render(
+            self.screen.blit(score_text, (220, 150))
+
+            play_again_text = self.text_font.render(
                 "Press space to play again", 1, BaseGame.WHITE
             )
-            self.screen.blit(restart_text, (200, 240))
-            restart_text = self.text_font.render(
+            self.screen.blit(play_again_text, (200, 240))
+
+            game_menu_text = self.text_font.render(
                 "Press enter to go back to game menu", 1, BaseGame.WHITE
             )
-            self.screen.blit(restart_text, (150, 300))
+            self.screen.blit(game_menu_text, (150, 300))
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()

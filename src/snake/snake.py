@@ -17,9 +17,12 @@ class Player:
         self.width = 20
         self.height = 20
         self.direction = "DOWN"
-
-        asset = pygame.image.load(bg.ASSETS_PATH + "snake/player.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "snake/player.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface) -> None:
@@ -49,9 +52,12 @@ class Border:
     def __init__(self) -> None:
         self.width = 40
         self.height = 40
-
-        asset = pygame.image.load(bg.ASSETS_PATH + "snake/border.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "snake/border.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
 
     def draw(self, screen: pygame.Surface) -> None:
         for x in range(int(bg.WIDTH / self.width)):
@@ -80,9 +86,12 @@ class Food:
         self.y = y
         self.width = 20
         self.height = 20
-
-        asset = pygame.image.load(bg.ASSETS_PATH + "snake/mouse.png").convert_alpha()
-        self.image = pygame.transform.scale(asset, (self.width, self.height))
+        self.image = pygame.transform.scale(
+            pygame.image.load(
+                bg.ASSETS_PATH + "snake/mouse.png"
+            ).convert_alpha(),
+            (self.width, self.height),
+        )
         self.rect = self.image.get_rect(center=(self.x, self.y))
 
     def draw(self, screen: pygame.Surface) -> None:
@@ -113,9 +122,13 @@ class Snake(bg):
             player.draw(self.screen)
             food.draw(self.screen)
 
-            score_text = self.text_font.render("Score: " + str(self.score), 1, bg.WHITE)
+            score_text = self.text_font.render(
+                "Score: " + str(self.score), 1, bg.WHITE
+            )
             self.screen.blit(score_text, (2, bg.HEIGHT - 22))
-            level_text = self.text_font.render("Level: " + str(level), 1, bg.WHITE)
+            level_text = self.text_font.render(
+                "Level: " + str(level), 1, bg.WHITE
+            )
             self.screen.blit(level_text, (255, bg.HEIGHT - 22))
 
             player.move()
